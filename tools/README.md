@@ -35,6 +35,7 @@
 | `build_v6_balanced_single.py` | balanced：单图多任务 37,186 行 |
 | `build_v6_balanced_reference.py` | balanced：多图参考匹配 6,707 行 |
 | `assemble_v6_balanced.py` | union 43,893 → S1/S2/S3 stage 文件 + validator + 上传包 |
+| `diagnose_and_refill_v6.py` | **边查验、边造数（对接 `Coding/OPD` 与 Montessori-Instruct）**：对 v2/V6 抽样或模型候选回答做**知识缺口 vs 图文边界框失准**诊断，输出 `datawheel_refill_plan.json`（各域/实体/底板重采样倍率与蒸馏处方）及多模态 VLM DPO/KTO/SFT 数据集 |
 
 ## 图像编辑 / Qwen-Image
 

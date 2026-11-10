@@ -59,7 +59,7 @@ split 通过实体/底板 ID 的稳定哈希分桶实现，生成时直接按配
 
 ## 🧠 面向 Qwen3.5-27B 中训练（V6 通道）
 
-v2 数据集已按 `~/Documents/Coding/Mid_train/` 的**实际中训练方案**（Qwen3.5-27B、ms-swift 4.3.2、V1–V5 通道、packed window 8192、GBS 32、S1/S2/S3 累计 LoRA）设计 V6 接入方案：
+v2 数据集已按 `~/Documents/Coding/CPT-SFT/training/qwen35_27b/` 的**实际中训练方案**（Qwen3.5-27B、ms-swift 4.3.2、V1–V5 通道、packed window 8192、GBS 32、S1/S2/S3 累计 LoRA）设计 V6 接入方案：
 
 - **数据格式**：`messages / images / enable_thinking / sample_id / cate_id / variant`，`variant=6` 由现有插件自动映射为 `loss_V6`，无需改训练代码；图片路径相对 `/data/autovision-cfs/autovision-notebook`。
 - **能力定位**：不重复 V1–V4 的通用 caption，而是补 27B 中训练最缺的**细粒度视觉证据能力**：小目标定位、多图参考匹配、相似干扰排除、证据不足拒绝、结构化描述、视觉事实一致性判断。
@@ -89,6 +89,7 @@ v2 数据集已按 `~/Documents/Coding/Mid_train/` 的**实际中训练方案**�
 | [`tools/build_v6_balanced_single.py`](tools/build_v6_balanced_single.py) | balanced 扩数据：37,186 行单图多任务行（8 cate 配额） |
 | [`tools/build_v6_balanced_reference.py`](tools/build_v6_balanced_reference.py) | balanced 扩数据：6,707 行多图参考匹配行 |
 | [`tools/assemble_v6_balanced.py`](tools/assemble_v6_balanced.py) | union → S1/S2/S3 stage 文件、validator、balanced 上传包 |
+| [`tools/diagnose_and_refill_v6.py`](tools/diagnose_and_refill_v6.py) | **边查验、边造数（对接 `Coding/OPD` 与 `Coding/CPT-SFT`）**：对 v2/V6 候选回答做**实体知识缺口 vs BBox 坐标失准**四维解耦诊断，输出 `datawheel_refill_plan.json` 重采样倍率单与 MS-SWIFT V6 多模态 DPO/KTO/SFT 训练集 |
 | [`tools/validate_swift_v6.py`](tools/validate_swift_v6.py) | V6 数据契约校验（schema / messages / 图片 / 长度估算 / cate 分布） |
 | [`tools/build_visual_report.py`](tools/build_visual_report.py) | 生成 `output/report/index.html`：数据集总览 + 带 BBox 标注的样例画廊 + 配比/质检/产物索引 |
 | [`tools/README.md`](tools/README.md) | 工具索引（资产构建 / v2 / V6 / 可视化） |
@@ -114,8 +115,9 @@ v2 数据集已按 `~/Documents/Coding/Mid_train/` 的**实际中训练方案**�
 ## 🏗️ 目录结构
 
 ```
-Coding/datawheel/
+Coding/Datawheel/
 ├── README.md                     # 项目总览（本文件）
+├── AGENTS.md                     # AI 编码代理工作约定与跨项目（CPT-SFT / OPD）互通说明
 ├── docs/                         # 文档
 │   ├── README.md                 # 文档索引
 │   └── MID_TRAIN_DATAWHEEL_PLAN.md  # Qwen3.5-27B 中训练 V6 数据方案
@@ -150,6 +152,8 @@ Coding/datawheel/
 │   ├── datawheel_v6_pilot/       # V6 试点 2.5k + upload + stage_files + parts + validation
 │   ├── datawheel_v6_balanced/    # V6 balanced 43,893 union + S1/S2/S3 + upload
 │   ├── legacy_v1/                # 历史 v1 演示产物与 10k caption 数据集
+│   ├── audit/placement/          # placement 摆放审计（audit JSON / issues / 叠加图）
+│   ├── placement/                # placement_optimizer 的 demo_* 交付示例
 │   └── _debug/                   # 调试图与命名覆盖报告
 ├── generate.py                   # 统一生成 CLI（含 v2 全量模式）
 ├── pipeline.py                   # 历史流水线入口
@@ -179,7 +183,7 @@ S1/S2/S3 中训练配比与 TRAIN_FILES 片段、质检/契约校验结论、产
 ## ⚡ 快速开始
 
 > 环境：项目自带 `.venv`（Python 3.14，numpy / opencv / pillow / resvg-py / pyarrow），无需联网。
-> 所有命令均在 `Coding/datawheel/` 下执行。
+> 所有命令均在 `Coding/Datawheel/` 下执行。
 
 ```bash
 # 0) 资产品质索引（首次或资产变更后执行，约 20s）
@@ -261,3 +265,5 @@ S1/S2/S3 中训练配比与 TRAIN_FILES 片段、质检/契约校验结论、产
 - [v2 数据集报告](output/datawheel_v2/report.md)（生成后自动创建）
 - [v1 10K 数据集报告](output/legacy_v1/DATASET_10K_REPORT.md)（历史）
 - [Qwen-Image 2.1 图像编辑管线设计](docs/QWEN_IMAGE_2_1_PIPELINE.md)
+- [AI 编码代理规范与跨仓（CPT-SFT / OPD）互通说明](AGENTS.md)
+- [全域数据合成与双通道蒸馏监控台 HTML](../OPD/dashboard.html)（由 [`../OPD/build_global_dashboard.py`](../OPD/build_global_dashboard.py) 生成）
